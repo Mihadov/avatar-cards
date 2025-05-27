@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мини-карточная игра</title>
-  <!-- Animate.css для готовых анимаций -->
+  <!-- Animate.css -->  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <style>
-    /* Центрируем всё и делаем фон */
     body {
       display: flex;
       flex-direction: column;
@@ -17,22 +16,19 @@
       margin: 0;
       background: #f0f0f0;
     }
-    /* Контейнер карты c перспективой для 3D-эффектов */
     #card-container {
-      width: 80vw;
+      width: 90vw;
       max-width: 400px;
       perspective: 1000px;
     }
-    /* Сами карточки */
     #card {
       width: 100%;
       height: auto;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    /* Кнопка переключения */
-    #next-card {
-      margin-top: 20px;
+    #next-card, #share-card {
+      margin-top: 12px;
       padding: 12px 24px;
       font-size: 1rem;
       border: none;
@@ -42,7 +38,7 @@
       cursor: pointer;
       transition: transform 0.1s;
     }
-    #next-card:active {
+    #next-card:active, #share-card:active {
       transform: scale(0.98);
     }
   </style>
@@ -50,38 +46,55 @@
 <body>
 
   <div id="card-container">
-    <!-- Стартовая карта с правилами -->
     <img id="card" src="cards/1.jpg" alt="Карта с правилами">
   </div>
   <button id="next-card">Следующая карта</button>
+  <button id="share-card">Поделиться</button>
 
-  <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
     $(function(){
-      const totalCards = 100; // Всего файлов 1.jpg–100.jpg
+      const totalCards = 100;
+      let currentCard = 1;
+
+      function showRandomCard() {
+        const rand = Math.floor(Math.random() * (totalCards - 1)) + 2;
+        currentCard = rand;
+        return rand;
+      }
 
       $('#next-card').on('click', function(){
         const $card = $('#card');
-
-        // Сначала анимация "выброса"
         $card.addClass('animate__animated animate__flipOutY').one('animationend', function(){
-          // Выбираем случайное число от 2 до 100 (1.jpg — только для правил)
-          const rand = Math.floor(Math.random() * (totalCards - 1)) + 2;
-          $card.attr('src', 'cards/' + rand + '.jpg');
-
-          // Убираем старую анимацию и запускаем новую — "въезжает"
-          $card
-            .removeClass('animate__flipOutY')
-            .addClass('animate__flipInY')
-            .one('animationend', function(){
-              // Убираем классы, чтобы анимация сработала снова при следующем клике
-              $card.removeClass('animate__animated animate__flipInY');
-            });
+          const rand = showRandomCard();
+          $card.attr('src', `cards/${rand}.jpg`);
+          $card.removeClass('animate__flipOutY')
+               .addClass('animate__flipInY')
+               .one('animationend', function(){
+                 $card.removeClass('animate__animated animate__flipInY');
+               });
         });
       });
+
+      $('#share-card').on('click', function(){
+        const imgSrc = document.getElementById('card').src;
+        if (navigator.share) {
+          navigator.share({
+            title: 'Моя карта',
+            text: 'Смотри, какая карта выпала!',
+            url: imgSrc
+          }).catch(console.error);
+        } else {
+          alert('Share API не поддерживается на этом устройстве.');
+        }
+      });
+
     });
   </script>
 
 </body>
 </html>
+<!--
+  Этот HTML-код создает простую мини-карточную игру с возможностью делиться картами.
+  Используется jQuery для обработки событий и анимации карт.
+  Карты хранятся в папке "cards" с именами от 1.jpg до 100.jpg.
