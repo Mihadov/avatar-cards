@@ -11,7 +11,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center; /* Вернули центрирование по вертикали */
+      justify-content: center;
       min-height: 100vh;
       margin: 0;
       padding: 20px;
@@ -79,32 +79,45 @@
         });
       });
 
-      $('#share-card').on('click', async function(){
+      $('#share-card').on('click', function(){
         const imgEl = document.getElementById('card');
-        const imgSrc = imgEl.src;
-        if (navigator.canShare && navigator.canShare({ files: [] })) {
-          try {
-            const response = await fetch(imgSrc);
-            const blob = await response.blob();
-            const fileName = imgSrc.split('/').pop();
-            const file = new File([blob], fileName, { type: blob.type });
-            await navigator.share({
+        const fileName = imgEl.src.split('/').pop();
+        try {
+          // Рисуем изображение на canvas для синхронного получения данных
+          const canvas = document.createElement('canvas');
+          canvas.width = imgEl.naturalWidth;
+          canvas.height = imgEl.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imgEl, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          // Декодируем base64 в бинарные данные
+          const base64 = dataUrl.split(',')[1];
+          const binary = atob(base64);
+          const array = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+          const blob = new Blob([array], { type: 'image/png' });
+          const file = new File([blob], fileName, { type: 'image/png' });
+
+          // Шарим файл
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
               title: 'Моя карта',
               text: 'Смотри, какая карта выпала!',
               files: [file]
-            });
-          } catch (err) {
-            console.error('Ошибка при шаринге файла:', err);
-            alert('Не удалось поделиться изображением.');
+            }).catch(console.error);
+          } else if (navigator.share) {
+            // fallback на URL
+            navigator.share({
+              title: 'Моя карта',
+              text: 'Смотри, какая карта выпала!',
+              url: imgEl.src
+            }).catch(console.error);
+          } else {
+            alert('Share API не поддерживается на этом устройстве.');
           }
-        } else if (navigator.share) {
-          navigator.share({
-            title: 'Моя карта',
-            text: 'Смотри, какая карта выпала!',
-            url: imgSrc
-          }).catch(console.error);
-        } else {
-          alert('Share API не поддерживается на этом устройстве.');
+        } catch (err) {
+          console.error('Ошибка при подготовке изображения:', err);
+          alert('Не удалось поделиться изображением.');
         }
       });
 
@@ -114,6 +127,7 @@
 </body>
 </html>
 <!--
-  Этот код создает простую мини-карточную игру, где пользователь может просматривать случайные карты с правилами.
-  При нажатии на кнопку "Следующая карта" происходит анимация смены карты.
-  Кнопка "Поделиться" позволяет поделиться текущей картой через Share API.
+  Этот код создает простую мини-карточную игру с возможностью делиться картами.
+  Используется jQuery для обработки событий и анимаций.
+  Карты хранятся в папке "cards" с именами от 1.jpg до 100.jpg.
+  Кнопка "Следующая карта" показывает случайную карту, а кнопка "Поделиться" позволяет поделиться текущей картой.
