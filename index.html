@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мини-карточная игра</title>
+  <!-- Animate.css для готовых анимаций -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    /* Центрируем всё и делаем фон */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+    /* Контейнер карты c перспективой для 3D-эффектов */
+    #card-container {
+      width: 80vw;
+      max-width: 400px;
+      perspective: 1000px;
+    }
+    /* Сами карточки */
+    #card {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* Кнопка переключения */
+    #next-card {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #007BFF;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    #next-card:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="card-container">
+    <!-- Стартовая карта с правилами -->
+    <img id="card" src="cards/1.jpg" alt="Карта с правилами">
+  </div>
+  <button id="next-card">Следующая карта</button>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(function(){
+      const totalCards = 100; // Всего файлов 1.jpg–100.jpg
+
+      $('#next-card').on('click', function(){
+        const $card = $('#card');
+
+        // Сначала анимация "выброса"
+        $card.addClass('animate__animated animate__flipOutY').one('animationend', function(){
+          // Выбираем случайное число от 2 до 100 (1.jpg — только для правил)
+          const rand = Math.floor(Math.random() * (totalCards - 1)) + 2;
+          $card.attr('src', 'cards/' + rand + '.jpg');
+
+          // Убираем старую анимацию и запускаем новую — "въезжает"
+          $card
+            .removeClass('animate__flipOutY')
+            .addClass('animate__flipInY')
+            .one('animationend', function(){
+              // Убираем классы, чтобы анимация сработала снова при следующем клике
+              $card.removeClass('animate__animated animate__flipInY');
+            });
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
