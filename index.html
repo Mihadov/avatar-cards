@@ -60,22 +60,28 @@
       const totalCards = 100;
       let currentCard = 1;
 
-      function showRandomCard() {
-        const rand = Math.floor(Math.random() * (totalCards - 1)) + 2;
-        currentCard = rand;
-        return rand;
+      function getRandomCardIndex() {
+        return Math.floor(Math.random() * (totalCards - 1)) + 2;
       }
 
       $('#next-card').on('click', function(){
         const $card = $('#card');
+        // Анимация выхода
         $card.addClass('animate__animated animate__flipOutY').one('animationend', function(){
-          const rand = showRandomCard();
-          $card.attr('src', `cards/${rand}.jpg`);
-          $card.removeClass('animate__flipOutY')
-               .addClass('animate__flipInY')
-               .one('animationend', function(){
-                 $card.removeClass('animate__animated animate__flipInY');
-               });
+          const rand = getRandomCardIndex();
+          const newSrc = `cards/${rand}.jpg`;
+          // Предзагрузка новой картинки
+          const imgPreload = new Image();
+          imgPreload.onload = function() {
+            // Как только загружена, меняем src и показываем анимацию входа
+            $card.attr('src', newSrc);
+            $card.removeClass('animate__flipOutY')
+                 .addClass('animate__flipInY')
+                 .one('animationend', function(){
+                   $card.removeClass('animate__animated animate__flipInY');
+                 });
+          };
+          imgPreload.src = newSrc;
         });
       });
 
@@ -83,14 +89,12 @@
         const imgEl = document.getElementById('card');
         const fileName = imgEl.src.split('/').pop();
         try {
-          // Рисуем изображение на canvas для синхронного получения данных
           const canvas = document.createElement('canvas');
           canvas.width = imgEl.naturalWidth;
           canvas.height = imgEl.naturalHeight;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(imgEl, 0, 0);
           const dataUrl = canvas.toDataURL('image/png');
-          // Декодируем base64 в бинарные данные
           const base64 = dataUrl.split(',')[1];
           const binary = atob(base64);
           const array = new Uint8Array(binary.length);
@@ -98,7 +102,6 @@
           const blob = new Blob([array], { type: 'image/png' });
           const file = new File([blob], fileName, { type: 'image/png' });
 
-          // Шарим файл
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               title: 'Моя карта',
@@ -106,7 +109,6 @@
               files: [file]
             }).catch(console.error);
           } else if (navigator.share) {
-            // fallback на URL
             navigator.share({
               title: 'Моя карта',
               text: 'Смотри, какая карта выпала!',
@@ -126,6 +128,7 @@
 
 </body>
 </html>
+
 <!--
   Этот код создает простую мини-карточную игру с возможностью делиться картами.
   Используется jQuery для обработки событий и анимаций.
